@@ -9,8 +9,8 @@ program
   .version('0.1.0')
   .option('-o, --output [dir]', 'output dir', process.cwd())
   .arguments('<url>')
-  .action(async (url) => {
-    const message = await pageLoader(url, `${program.opts().output}`);
-    console.log(message);
+  .action((url) => {
+    pageLoader(url, `${program.opts().output}`)
+      .then((message) => console.log(message));
   })
   .parse();

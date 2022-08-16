@@ -27,7 +27,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   tmpPathToDir = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader'));
-  expectedAbsolutePath = tmpPathToDir.concat('/', expectedFileName);
+  expectedAbsolutePath = `${tmpPathToDir}/${expectedFileName}`;
 });
 
 test('isCorrectPath', async () => {
