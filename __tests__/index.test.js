@@ -14,37 +14,44 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const getFixturePath = (filename) => path.join(__dirname, '..', '__fixtures__', filename);
 
-const url = 'https://page-loader.hexlet.repl.co';
-const expectedFileName = 'page-loader-hexlet-repl-co.html';
-
 let expectedAbsolutePath;
 let tmpPathToDir;
+let response;
+let image;
 let expectedData;
 
 beforeAll(async () => {
-  expectedData = await fs.readFile(getFixturePath('response.html'), 'utf-8');
+  response = await fs.readFile(getFixturePath('response.html'), 'utf-8');
+  image = await fs.readFile(getFixturePath('nodejs.png'));
+  expectedData = await fs.readFile(getFixturePath('result.html'), 'utf-8');
 });
 
 beforeEach(async () => {
   tmpPathToDir = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader'));
-  expectedAbsolutePath = `${tmpPathToDir}/${expectedFileName}`;
-});
-
-test('isCorrectPath', async () => {
-  nock(url)
-    .get('/')
-    .reply(200, expectedData);
-
-  const actualPath = await pageLoader(url, tmpPathToDir);
-  expect(actualPath).toEqual(expectedAbsolutePath);
+  expectedAbsolutePath = `${tmpPathToDir}/ru-hexlet-io-courses.html`;
 });
 
 test('mainflow', async () => {
-  nock(url)
-    .get('/')
-    .reply(200, expectedData);
+  nock('https://ru.hexlet.io')
+    .get('/courses')
+    .reply(200, response);
+  nock('https://ru.hexlet.io')
+    .get('/assets/professions/nodejs.png')
+    .reply(200, image);
 
-  await pageLoader(url, tmpPathToDir);
+  await pageLoader('https://ru.hexlet.io/courses', tmpPathToDir);
   const data = await fs.readFile(expectedAbsolutePath, 'utf-8');
   expect(data).toEqual(expectedData);
+});
+
+test('isCorrectPath', async () => {
+  nock('https://ru.hexlet.io')
+    .get('/courses')
+    .reply(200, response);
+  nock('https://ru.hexlet.io')
+    .get('/assets/professions/nodejs.png')
+    .reply(200, image);
+
+  const actualPath = await pageLoader('https://ru.hexlet.io/courses', tmpPathToDir);
+  expect(actualPath).toEqual(expectedAbsolutePath);
 });
