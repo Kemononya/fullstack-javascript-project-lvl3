@@ -3,7 +3,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import fileNameChanger from './fileNameChanger.js';
 import linkNameChanger from './linkNameChanger.js';
-import extractLinks from './extractImgLinks.js';
+import extractLinks from './extractLinks.js';
 import htmlEditor from './htmlEditor.js';
 
 const pageLoader = (href, dirpath) => {
@@ -16,17 +16,23 @@ const pageLoader = (href, dirpath) => {
       return response.data;
     })
     .then((data) => {
-      const links = extractLinks(data).map((rawLink) => new URL(rawLink, href).toString());
+      const imgLinks = extractLinks(data, 'img', href).map((rawLink) => new URL(rawLink, href).toString());
+      const scriptLinks = extractLinks(data, 'script', href).map((rawLink) => new URL(rawLink, href).toString());
+      const linkLinks = extractLinks(data, 'link', href).map((rawLink) => new URL(rawLink, href).toString());
+      const links = [...imgLinks, ...scriptLinks, ...linkLinks];
       const renamedLinks = links.map((link) => linkNameChanger(link));
-      const promises = links.map((link) => axios({
+      const imgPromises = imgLinks.map((link) => axios({
         method: 'get',
         url: link,
         responseType: 'stream',
       }).then((res) => res.data));
+      const scriptPromises = scriptLinks.map((link) => axios.get(link).then((res) => res.data));
+      const linkPromises = linkLinks.map((link) => axios.get(link).then((res) => res.data));
+      const promises = [...imgPromises, ...scriptPromises, ...linkPromises];
       Promise.all(promises)
         .then((contents) => contents
           .forEach((content, id) => fs.writeFile(`${absolutePath}_files/${renamedLinks[id]}`, content)));
-      return htmlEditor(data, renamedLinks, fileName);
+      return htmlEditor(data, renamedLinks, fileName, href);
     })
     .then((data) => fs.writeFile(`${absolutePath}.html`, `${data}`))
     .then(() => `${absolutePath}.html`);

@@ -18,11 +18,17 @@ let expectedAbsolutePath;
 let tmpPathToDir;
 let response;
 let image;
+let scripts;
+let styles;
+let canonical;
 let expectedData;
 
 beforeAll(async () => {
   response = await fs.readFile(getFixturePath('response.html'), 'utf-8');
   image = await fs.readFile(getFixturePath('nodejs.png'));
+  scripts = await fs.readFile(getFixturePath('runtime.js'));
+  styles = await fs.readFile(getFixturePath('menu.css'));
+  canonical = await fs.readFile(getFixturePath('courses.html'));
   expectedData = await fs.readFile(getFixturePath('result.html'), 'utf-8');
 });
 
@@ -38,6 +44,15 @@ test('mainflow', async () => {
   nock('https://ru.hexlet.io')
     .get('/assets/professions/nodejs.png')
     .reply(200, image);
+  nock('https://ru.hexlet.io')
+    .get('/packs/js/runtime.js')
+    .reply(200, scripts);
+  nock('https://ru.hexlet.io')
+    .get('/assets/application.css')
+    .reply(200, styles);
+  nock('https://ru.hexlet.io')
+    .get('/courses')
+    .reply(200, canonical);
 
   await pageLoader('https://ru.hexlet.io/courses', tmpPathToDir);
   const data = await fs.readFile(expectedAbsolutePath, 'utf-8');
@@ -51,6 +66,15 @@ test('isCorrectPath', async () => {
   nock('https://ru.hexlet.io')
     .get('/assets/professions/nodejs.png')
     .reply(200, image);
+  nock('https://ru.hexlet.io')
+    .get('/packs/js/runtime.js')
+    .reply(200, scripts);
+  nock('https://ru.hexlet.io')
+    .get('/assets/application.css')
+    .reply(200, styles);
+  nock('https://ru.hexlet.io')
+    .get('/courses')
+    .reply(200, canonical);
 
   const actualPath = await pageLoader('https://ru.hexlet.io/courses', tmpPathToDir);
   expect(actualPath).toEqual(expectedAbsolutePath);
